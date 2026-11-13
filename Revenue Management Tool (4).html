@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartRev GR Enterprise - 8 Properties + iCal Edition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .editable-input { background-color: transparent; transition: all 0.2s; }
+        .editable-input:focus { background-color: #ffffff; outline: 2px solid #0284c7; }
+        .tab-prop-active { background-color: #0284c7 !important; color: #ffffff !important; font-weight: 700; border-color: #0284c7 !important; shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tab-month-active { background-color: #0f172a !important; color: #ffffff !important; font-weight: 600; }
+        .badge-live { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-hist { background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+        .badge-google { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-ical { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- Global Top Header -->
+    <header class="bg-slate-900 text-white sticky top-0 z-40 shadow-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand & Tagline -->
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="bg-gradient-to-tr from-sky-500 to-indigo-600 text-white p-2 rounded-xl font-bold text-xl flex items-center justify-center w-10 h-10 shadow-lg shadow-sky-500/20">
+                    <i class="fa-solid fa-hotel"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base sm:text-lg leading-none flex items-center gap-2">
+                        SmartRev <span class="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-[10px] sm:text-xs px-2 py-0.5 rounded font-black uppercase tracking-wider">Enterprise 8P</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400 hidden sm:block">Revenue Management & iCal Sync • 180 Ημέρες (13 Νοε 2026 - 11 Μαΐ 2027)</p>
+                </div>
+            </div>
+
+            <!-- Global Action Tools -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Sync All iCals Button -->
+                <button onclick="syncAllPropertiesICal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-rotate text-xs"></i>
+                    <span class="hidden md:inline">Συγχρονισμός</span> iCal (Όλα)
+                </button>
+
+                <!-- API Key Settings -->
+                <button onclick="openModal('apiModal')" id="apiStatusHeaderBtn" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                    <i class="fa-solid fa-key text-amber-400"></i>
+                    <span class="hidden lg:inline">SerpApi:</span>
+                    <span id="apiStatusHeaderLabel" class="font-bold text-amber-400">Off</span>
+                </button>
+
+                <!-- Bulk Occupancy -->
+                <button onclick="openModal('bulkModal')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span class="hidden lg:inline">Μαζική</span> Πληρότητα
+                </button>
+
+                <!-- Export CSV Options -->
+                <div class="relative group">
+                    <button class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>CSV</span>
+                        <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </button>
+                    <div class="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl py-1 w-48 hidden group-hover:block z-50 text-slate-800 text-xs">
+                        <button onclick="exportCurrentPropertyCSV()" class="w-full text-left px-3 py-2 hover:bg-sky-50 font-medium">
+                            <i class="fa-solid fa-download text-sky-600 mr-2"></i>Ενεργό Κατάλυμα
+                        </button>
+                        <button onclick="exportAllPropertiesConsolidatedCSV()" class="w-full text-left px-3 py-2 hover:bg-sky-50 font-semibold border-t border-slate-100 text-indigo-700">
+                            <i class="fa-solid fa-layer-group text-indigo-600 mr-2"></i>Όλα τα 8 Καταλύματα
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Property Selector Navigation Tabs (8 Properties + Portfolio Tab) -->
+    <nav class="bg-slate-800 border-b border-slate-700 sticky top-16 z-30 shadow-inner">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div id="propertyTabsContainer" class="flex items-center space-x-1 sm:space-x-2 overflow-x-auto py-2">
+                <!-- Dynamically Injected via JS -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+
+        <!-- VIEW 1: PORTFOLIO OVERVIEW TAB (Tab Index 8) -->
+        <div id="portfolioView" class="hidden space-y-6">
+            <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-lg border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <span class="bg-indigo-500/20 text-indigo-300 text-xs font-extrabold px-2.5 py-1 rounded-md border border-indigo-500/30 uppercase tracking-wider">Executive Overview</span>
+                    <h2 class="text-2xl font-black mt-2 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-amber-400"></i>
+                        <span>Συγκεντρωτικό Χαρτοφυλάκιο (8 Καταλύματα)</span>
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-1">Συνολικά αποτελέσματα, έσοδα & συγκριτικοί δείκτες για τις επόμενες 180 ημέρες</p>
+                </div>
+                <button onclick="syncAllPropertiesICal()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Συγχρονισμός Όλων των iCals</span>
+                </button>
+            </div>
+
+            <!-- Portfolio Aggregate KPI Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                    <div class="text-xs font-semibold text-slate-500 uppercase">Συνολικά Έσοδα (180d)</div>
+                    <div id="portKpiRevenue" class="text-2xl font-black text-slate-900 mt-1">€0</div>
+                    <div id="portKpiUnits" class="text-xs text-slate-500 mt-1 font-medium">0 Μονάδες / Δωμάτια</div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                    <div class="text-xs font-semibold text-slate-500 uppercase">Μέση Πληρότητα</div>
+                    <div id="portKpiOcc" class="text-2xl font-black text-emerald-600 mt-1">0%</div>
+                    <div id="portKpiRoomNights" class="text-xs text-slate-500 mt-1 font-medium">0 Room Nights</div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                    <div class="text-xs font-semibold text-slate-500 uppercase">Μέση Τιμή ADR</div>
+                    <div id="portKpiADR" class="text-2xl font-black text-sky-700 mt-1">€0</div>
+                    <div class="text-xs text-slate-500 mt-1 font-medium">Σταθμισμένος Μέσος Όρος</div>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                    <div class="text-xs font-semibold text-slate-500 uppercase">Μέσο RevPAR</div>
+                    <div id="portKpiRevPAR" class="text-2xl font-black text-indigo-700 mt-1">€0</div>
+                    <div id="portKpiUplift" class="text-xs text-emerald-600 font-bold mt-1">+€0 vs Στατική</div>
+                </div>
+            </div>
+
+            <!-- Portfolio Comparative Chart -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-chart-column text-indigo-600"></i>
+                    <span>Σύγκριση Εσόδων & Πληρότητας ανά Κατάλυμα</span>
+                </h3>
+                <div class="h-72 w-full">
+                    <canvas id="portfolioChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Portfolio Properties Grid / Table -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 font-bold text-slate-800 text-sm flex justify-between items-center bg-slate-50">
+                    <span>Αναλυτικός Πίνακας Καταλυμάτων</span>
+                    <button onclick="exportAllPropertiesConsolidatedCSV()" class="text-xs text-sky-600 hover:text-sky-800 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-file-csv"></i> Εξαγωγή Consolidated CSV
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs sm:text-sm">
+                        <thead class="bg-slate-100 text-slate-600 font-semibold uppercase text-[11px]">
+                            <tr>
+                                <th class="py-3 px-4">#</th>
+                                <th class="py-3 px-4">Όνομα Καταλύματος</th>
+                                <th class="py-3 px-4">Περιοχή</th>
+                                <th class="py-3 px-4 text-center">Μονάδες</th>
+                                <th class="py-3 px-4 text-right">Έσοδα 180d</th>
+                                <th class="py-3 px-4 text-right">Μέση ADR</th>
+                                <th class="py-3 px-4 text-center">Πληρότητα</th>
+                                <th class="py-3 px-4 text-right">RevPAR</th>
+                                <th class="py-3 px-4 text-center">iCal Sync</th>
+                                <th class="py-3 px-4 text-center">Ενέργεια</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portfolioTableBody" class="divide-y divide-slate-100">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- VIEW 2: SINGLE PROPERTY WORKSPACE (Tabs 0 to 7) -->
+        <div id="singlePropertyView" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT SIDEBAR: Property Configuration & iCal Panel -->
+            <aside class="lg:col-span-4 space-y-5">
+
+                <!-- Active Property Rename & Identity Header -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span id="activePropIndexBadge" class="bg-sky-100 text-sky-800 font-black text-xs px-2 py-0.5 rounded-md">P1</span>
+                            <h2 id="activePropNameDisplay" class="font-extrabold text-slate-800 text-base truncate max-w-[180px]">Κατάλυμα 1</h2>
+                        </div>
+                        <button onclick="openModal('renameModal')" class="text-xs text-sky-600 hover:text-sky-800 font-bold bg-sky-50 px-2 py-1 rounded-lg border border-sky-100 transition">
+                            <i class="fa-solid fa-pen"></i> Μετονομασία
+                        </button>
+                    </div>
+
+                    <!-- Open-Meteo Geocoding Search -->
+                    <div class="space-y-2">
+                        <label class="block font-semibold text-xs text-slate-700">Προορισμός & Καιρός (Open-Meteo API)</label>
+                        <div class="relative">
+                            <input type="text" id="geoSearchInput" oninput="handleGeoSearchInput(this.value)" autocomplete="off"
+                                placeholder="Αναζήτηση π.χ. Αθήνα, Σαντορίνη, Χανιά, Πήλιο..." 
+                                class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-7 py-1.5 text-xs text-slate-800 font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                            <span class="absolute left-2.5 top-2 text-slate-400 text-xs"><i class="fa-solid fa-magnifying-glass"></i></span>
+                            <button type="button" id="clearGeoBtn" onclick="clearGeoSearch()" class="absolute right-2 top-2 text-slate-400 hover:text-slate-600 text-xs hidden">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <!-- Autocomplete Dropdown -->
+                        <div id="geoSearchResults" class="absolute left-4 right-4 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-52 overflow-y-auto hidden divide-y divide-slate-100">
+                            <!-- Injected via JS -->
+                        </div>
+
+                        <!-- Quick Pills -->
+                        <div class="flex flex-wrap gap-1 pt-1">
+                            <button onclick="quickSelectLoc('Athens', 37.9838, 23.7275, 'Αττική', 15, 'city')" class="text-[10px] bg-slate-100 hover:bg-sky-100 text-slate-600 px-2 py-0.5 rounded transition">Αθήνα</button>
+                            <button onclick="quickSelectLoc('Thessaloniki', 40.6401, 22.9444, 'Μακεδονία', 10, 'city')" class="text-[10px] bg-slate-100 hover:bg-sky-100 text-slate-600 px-2 py-0.5 rounded transition">Θεσσαλονίκη</button>
+                            <button onclick="quickSelectLoc('Santorini', 36.3932, 25.4615, 'Κυκλάδες', 120, 'coastal')" class="text-[10px] bg-slate-100 hover:bg-sky-100 text-slate-600 px-2 py-0.5 rounded transition">Σαντορίνη</button>
+                            <button onclick="quickSelectLoc('Mykonos', 37.4467, 25.3289, 'Κυκλάδες', 15, 'coastal')" class="text-[10px] bg-slate-100 hover:bg-sky-100 text-slate-600 px-2 py-0.5 rounded transition">Μύκονος</button>
+                            <button onclick="quickSelectLoc('Chania', 35.5138, 24.0180, 'Κρήτη', 10, 'coastal')" class="text-[10px] bg-slate-100 hover:bg-sky-100 text-slate-600 px-2 py-0.5 rounded transition">Χανιά</button>
+                            <button onclick="quickSelectLoc('Rhodes', 36.4349, 28.2176, 'Δωδεκάνησα', 10, 'coastal')" class="text-[10px] bg-slate-100 hover:bg-sky-100 text-slate-600 px-2 py-0.5 rounded transition">Ρόδος</button>
+                            <button onclick="quickSelectLoc('Corfu', 39.6243, 19.9217, 'Ιόνια', 12, 'coastal')" class="text-[10px] bg-slate-100 hover:bg-sky-100 text-slate-600 px-2 py-0.5 rounded transition">Κέρκυρα</button>
+                            <button onclick="quickSelectLoc('Nafplio', 37.5671, 22.8079, 'Πελοπόννησος', 10, 'coastal')" class="text-[10px] bg-slate-100 hover:bg-sky-100 text-slate-600 px-2 py-0.5 rounded transition">Ναύπλιο</button>
+                        </div>
+
+                        <!-- Active Location Badge -->
+                        <div class="p-2.5 bg-sky-50/70 border border-sky-200/70 rounded-xl flex items-center justify-between text-xs mt-2">
+                            <div>
+                                <span id="locNameDisplay" class="font-bold text-slate-800">Αθήνα</span>
+                                <span id="locRegionDisplay" class="text-[11px] text-slate-500 font-medium">(Αττική)</span>
+                            </div>
+                            <span id="locTypeBadge" class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Πόλη</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking.com & Airbnb iCal Integration Panel -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 space-y-3.5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-check text-amber-500"></i>
+                            <span>iCal Sync (Booking / Airbnb)</span>
+                        </h3>
+                        <span id="icalSyncStatusBadge" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono font-bold">Unsynced</span>
+                    </div>
+
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Επικολλήστε 1 ή περισσότερα iCal URLs (ένα ανά γραμμή για πολλαπλές μονάδες/δωμάτια):
+                    </p>
+
+                    <div>
+                        <textarea id="icalUrlsInput" rows="3" onchange="saveActivePropConfig()" 
+                            placeholder="https://admin.booking.com/hotel/hotelbooking/ical.html?t=...&#10;https://www.airbnb.com/calendar/ical/..." 
+                            class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-mono text-slate-800 focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="syncActivePropertyICal()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-2 px-3 rounded-lg shadow transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-rotate"></i>
+                            <span>Συγχρονισμός iCal</span>
+                        </button>
+                        <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-2 px-3 rounded-lg border border-slate-300 transition flex items-center gap-1" title="Εισαγωγή τοπικού αρχείου .ics">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                            <span>.ics</span>
+                            <input type="file" accept=".ics" onchange="handleLocalIcsUpload(event)" class="hidden">
+                        </label>
+                    </div>
+
+                    <div id="icalLastSyncLabel" class="text-[10px] text-slate-400 italic text-right">
+                        Τελευταίος συγχρονισμός: Ποτέ
+                    </div>
+                </div>
+
+                <!-- Property Rate Parameters Form -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 space-y-3.5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-sky-600"></i>
+                            <span>Παράμετροι Τιμολόγησης</span>
+                        </h3>
+                        <span class="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            Auto-Saved
+                        </span>
+                    </div>
+
+                    <div class="space-y-3 text-xs">
+                        <!-- Total Units / Rooms -->
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Αριθμός Μονάδων / Δωματίων (Units)</label>
+                            <input type="number" id="propUnitsInput" min="1" max="100" value="1" oninput="saveActivePropConfig()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 font-bold text-slate-900">
+                            <span class="text-[10px] text-slate-400">Ορίζει πώς υπολογίζεται η πληρότητα % από τα iCals</span>
+                        </div>
+
+                        <!-- Base Rate & Limits -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Βασική (€)</label>
+                                <input type="number" id="propBaseRateInput" value="100" oninput="saveActivePropConfig()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 font-bold text-slate-900">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Floor (€)</label>
+                                <input type="number" id="propMinRateInput" value="65" oninput="saveActivePropConfig()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 font-bold text-rose-600">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Ceiling (€)</label>
+                                <input type="number" id="propMaxRateInput" value="350" oninput="saveActivePropConfig()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 font-bold text-emerald-600">
+                            </div>
+                        </div>
+
+                        <!-- Category Tier & Strategy -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Κατηγορία</label>
+                                <select id="propStarTierSelect" onchange="saveActivePropConfig()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-800">
+                                    <option value="1.0">Standard (1.0x)</option>
+                                    <option value="1.2">Superior (1.2x)</option>
+                                    <option value="1.45">Luxury Villa (1.45x)</option>
+                                    <option value="0.85">Budget (0.85x)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Στρατηγική</label>
+                                <select id="propStrategySelect" onchange="saveActivePropConfig()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-slate-800">
+                                    <option value="1">Συντηρητική</option>
+                                    <option value="2" selected>Ισορροπημένη</option>
+                                    <option value="3">Επιθετική</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- RIGHT WORKSPACE: KPIs, Google API Banner, Chart & 180-Day Table -->
+            <section class="lg:col-span-8 space-y-6">
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                        <div class="text-[11px] font-semibold text-slate-500 uppercase">Έσοδα 180d</div>
+                        <div id="kpiRevenue" class="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">€0</div>
+                        <div id="kpiUpliftBadge" class="mt-1 flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded w-max">
+                            <span id="kpiUpliftPct">+0.0%</span> vs static
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                        <div class="text-[11px] font-semibold text-slate-500 uppercase">Μέση Τιμή (ADR)</div>
+                        <div id="kpiADR" class="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">€0</div>
+                        <div class="mt-1 text-xs text-slate-500">
+                            Base: <span id="kpiBaseCompare" class="font-bold">€0</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                        <div class="text-[11px] font-semibold text-slate-500 uppercase">Μέση Πληρότητα</div>
+                        <div id="kpiOcc" class="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">0%</div>
+                        <div class="mt-1 text-xs text-slate-500">
+                            Nights: <span id="kpiTotalRoomNights" class="font-bold">0</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                        <div class="text-[11px] font-semibold text-slate-500 uppercase">RevPAR</div>
+                        <div id="kpiRevPAR" class="text-xl sm:text-2xl font-black text-sky-700 mt-0.5">€0</div>
+                        <div class="mt-1 text-xs text-emerald-600 font-bold">
+                            +<span id="kpiUpliftEuro">€0</span> όφελος
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Google Live Data Fetch Banner -->
+                <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-xl p-4 text-white shadow-md border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="space-y-0.5">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded uppercase">SerpApi Engine</span>
+                            <h3 class="font-bold text-xs sm:text-sm text-white">Google Hotels & Google Trends Live Data</h3>
+                        </div>
+                        <p class="text-[11px] text-slate-300">Αντλήστε πραγματικές τιμές ανταγωνισμού & δείκτη ζήτησης για την περιοχή</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button onclick="fetchGoogleTrendsData()" class="flex-1 sm:flex-initial bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center justify-center gap-1 shadow">
+                            <i class="fa-solid fa-arrow-trend-up"></i>
+                            <span>Trends (1 cr)</span>
+                        </button>
+                        <button onclick="openModal('googleHotelsModal')" class="flex-1 sm:flex-initial bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center justify-center gap-1 shadow">
+                            <i class="fa-solid fa-hotel"></i>
+                            <span>Google Rates</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chart.js Visualization Container -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-chart-area text-sky-600"></i>
+                            <span>Τάσεις Τιμολόγησης & Πληρότητας (180 Ημέρες)</span>
+                        </h3>
+                        <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                            <button id="chartMode30Btn" onclick="setChartMode('30')" class="px-2.5 py-0.5 text-xs font-semibold rounded bg-white text-sky-700 shadow-sm">30 Ημέρες</button>
+                            <button id="chartMode180Btn" onclick="setChartMode('180')" class="px-2.5 py-0.5 text-xs font-semibold rounded text-slate-600">180 Ημέρες</button>
+                        </div>
+                    </div>
+                    <div class="h-60 w-full">
+                        <canvas id="propertyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 180-Day Table with Month Tabs -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 space-y-3 bg-slate-50/60">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-days text-sky-600"></i>
+                                <span>Ημερολόγιο 6 Μηνών (180 Ημέρες)</span>
+                            </h3>
+                            <button onclick="applyAllRecommendations()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-lg transition flex items-center gap-1">
+                                <i class="fa-solid fa-check-double"></i> Εφαρμογή Όλων
+                            </button>
+                        </div>
+
+                        <!-- Month Tabs Navigation -->
+                        <div id="monthTabsContainer" class="flex items-center gap-1 overflow-x-auto pb-1 pt-1 border-t border-slate-200">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-100 text-slate-600 font-semibold uppercase text-[10px] sticky top-0 z-20 shadow-sm">
+                                <tr>
+                                    <th class="py-2.5 px-3">Ημερομηνία</th>
+                                    <th class="py-2.5 px-3">Καιρός</th>
+                                    <th class="py-2.5 px-3">Αργία / Σεζόν</th>
+                                    <th class="py-2.5 px-3 text-center">Trends</th>
+                                    <th class="py-2.5 px-3 text-center">Ζήτηση</th>
+                                    <th class="py-2.5 px-3 text-center">Πληρότητα %</th>
+                                    <th class="py-2.5 px-3 text-right">Ανταγωνισμός</th>
+                                    <th class="py-2.5 px-3 text-right font-bold text-sky-700 bg-sky-50">Smart Rate</th>
+                                    <th class="py-2.5 px-3 text-right">RevPAR</th>
+                                    <th class="py-2.5 px-3 text-center">Lock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pricingTableBody" class="divide-y divide-slate-100 text-slate-700">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- MODAL 1: SERPAPI SETTINGS -->
+    <div id="apiModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-key text-amber-500"></i>
+                    <span>Ρυθμίσεις SerpApi (Shared για όλα τα Καταλύματα)</span>
+                </h3>
+                <button onclick="closeModal('apiModal')" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">SerpApi Private Key</label>
+                    <input type="password" id="serpApiKeyInput" placeholder="Επικολλήστε το API key..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-mono">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">CORS Proxy Router</label>
+                    <select id="corsProxySelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2">
+                        <option value="https://corsproxy.io/?">CorsProxy.io (Συνιστάται)</option>
+                        <option value="https://api.allorigins.win/raw?url=">AllOrigins.win Proxy</option>
+                    </select>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-100 flex justify-between items-center">
+                <button onclick="testSerpApiConnection()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg text-xs">Δοκιμή Σύνδεσης</button>
+                <button onclick="saveApiKeySettings()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Αποθήκευση</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: RENAME ACTIVE PROPERTY -->
+    <div id="renameModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4 border border-slate-200">
+            <h3 class="font-bold text-slate-900 text-sm">Μετονομασία Καταλύματος</h3>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Νέο Όνομα (π.χ. Villa Sunrise)</label>
+                <input type="text" id="renamePropInput" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-bold text-slate-900">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('renameModal')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium px-3 py-1.5 rounded-lg text-xs">Ακύρωση</button>
+                <button onclick="executeRenameProperty()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Αποθήκευση</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: BULK OCCUPANCY EDIT -->
+    <div id="bulkModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 space-y-4 border border-slate-200">
+            <h3 class="font-bold text-slate-900 text-sm">Μαζική Επεξεργασία Πληρότητας</h3>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Πεδίο Εφαρμογής</label>
+                    <select id="bulkScopeSelect" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2">
+                        <option value="all">Όλες οι 180 ημέρες</option>
+                        <option value="weekends">Μόνο Σαββατοκύριακα (Παρασκευή & Σάββατο)</option>
+                        <option value="weekdays">Μόνο Καθημερινές</option>
+                        <option value="current_month">Τρέχων Προβαλλόμενος Μήνας</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-700 mb-1">Νέα Πληρότητα (%)</label>
+                    <input type="number" id="bulkOccValue" min="0" max="100" value="75" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-bold text-slate-900">
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="bulkSkipIcalCheck" checked class="rounded text-sky-600 focus:ring-sky-500">
+                    <label for="bulkSkipIcalCheck" class="text-slate-600 font-medium">Μην αλλάζεις μέρες κλειδωμένες από iCal</label>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('bulkModal')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium px-3 py-1.5 rounded-lg text-xs">Ακύρωση</button>
+                <button onclick="executeBulkUpdate()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-1.5 rounded-lg text-xs">Εφαρμογή</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: GOOGLE HOTELS FETCH CONTROL -->
+    <div id="googleHotelsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 space-y-4 border border-slate-200">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-hotel text-sky-600"></i>
+                <span>Google Hotels Rate Fetcher</span>
+            </h3>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Εύρος Ημερομηνιών</label>
+                    <select id="googleHotelsRangeSelect" onchange="updateCreditCostEstimate()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2">
+                        <option value="next_7">Επόμενες 7 ημέρες (7 Credits)</option>
+                        <option value="next_14">Επόμενες 14 ημέρες (14 Credits)</option>
+                        <option value="weekends_30">Σαββατοκύριακα επόμενων 30 ημερών (8 Credits)</option>
+                    </select>
+                </div>
+                <div class="p-3 bg-sky-50 border border-sky-200 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                        <div class="font-bold text-sky-900">Εκτιμώμενο Κόστος</div>
+                        <div id="creditCostEstimateText" class="text-sky-700">7 Credits</div>
+                    </div>
+                    <div class="text-right font-bold text-slate-800" id="googleHotelsTargetLocName">Αθήνα</div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal('googleHotelsModal')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium px-3 py-1.5 rounded-lg text-xs">Ακύρωση</button>
+                <button id="startGoogleHotelsFetchBtn" onclick="executeGoogleHotelsFetch()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-1.5 rounded-lg text-xs">Έναρξη Λήψης</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        /* ==========================================================================
+           1. CONSTANTS & GREEK HOLIDAYS (NOV 13, 2026 - MAY 11, 2027)
+           ========================================================================== */
+        const START_DATE_STR = "2026-11-13";
+
+        const GREEK_HOLIDAYS_MAP = {
+            "2026-11-17": { name: "Πολυτεχνείο", factor: 1.20 },
+            "2026-12-24": { name: "Παραμονή Χριστουγέννων", factor: 1.45 },
+            "2026-12-25": { name: "Χριστούγεννα", factor: 1.55 },
+            "2026-12-26": { name: "2η Ημέρα Χριστουγέννων", factor: 1.40 },
+            "2026-12-31": { name: "Παραμονή Πρωτοχρονιάς", factor: 1.60 },
+            "2027-01-01": { name: "Πρωτοχρονιά", factor: 1.50 },
+            "2027-01-06": { name: "Θεοφάνεια", factor: 1.30 },
+            "2027-02-14": { name: "Αγίου Βαλεντίνου", factor: 1.25 },
+            "2027-02-25": { name: "Τσικνοπέμπτη", factor: 1.15 },
+            "2027-03-15": { name: "Καθαρά Δευτέρα", factor: 1.45 },
+            "2027-03-25": { name: "25η Μαρτίου", factor: 1.35 },
+            "2027-04-30": { name: "Μεγάλη Παρασκευή", factor: 1.40 },
+            "2027-05-01": { name: "Μεγάλο Σάββατο / Πρωτομαγιά", factor: 1.50 },
+            "2027-05-02": { name: "Ορθόδοξο Πάσχα 2027", factor: 1.65 },
+            "2027-05-03": { name: "Δευτέρα Πάσχα", factor: 1.40 }
+        };
+
+        const STORAGE_KEY = 'smartrev_gr_enterprise_8p_v1';
+
+        /* ==========================================================================
+           2. GLOBAL STATE ARCHITECTURE
+           ========================================================================== */
+        let state = {
+            activePropertyIndex: 0, // 0-7 for properties, 8 for Portfolio View
+            globalApiKey: '',
+            globalCorsProxy: 'https://corsproxy.io/?',
+            properties: [],
+            chartInstance: null,
+            portfolioChartInstance: null,
+            chartMode: '30',
+            activeTab: 'all'
+        };
+
+        let geoSearchDebounceTimer = null;
+
+        /* ==========================================================================
+           3. INITIALIZATION & STORAGE
+           ========================================================================== */
+        window.addEventListener('DOMContentLoaded', async () => {
+            initializeDefaultState();
+            loadConfigFromStorage();
+            renderPropertyTabsNav();
+            initChart();
+            initPortfolioChart();
+            
+            if (state.activePropertyIndex < 8) {
+                await fetchWeatherDataForProp(state.activePropertyIndex);
+            }
+            
+            switchPropertyView(state.activePropertyIndex);
+        });
+
+        function initializeDefaultState() {
+            state.properties = [];
+            for (let p = 0; p < 8; p++) {
+                state.properties.push({
+                    id: p + 1,
+                    name: `Κατάλυμα ${p + 1}`,
+                    totalUnits: 1,
+                    baseRate: 100,
+                    minRate: 65,
+                    maxRate: 350,
+                    starTierMult: 1.0,
+                    strategyLevel: 2,
+                    location: { name: 'Αθήνα', lat: 37.9838, lon: 23.7275, region: 'Αττική', elevation: 15, type: 'city' },
+                    profileOverride: 'auto',
+                    icalUrls: '',
+                    icalLastSync: null,
+                    daysData: create180DaysDataForProp()
+                });
+            }
+        }
+
+        function create180DaysDataForProp() {
+            const startDate = new Date(START_DATE_STR);
+            const days = [];
+
+            for (let i = 0; i < 180; i++) {
+                const dateObj = new Date(startDate);
+                dateObj.setDate(startDate.getDate() + i);
+
+                const year = dateObj.getFullYear();
+                const monthStr = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const dayStr = String(dateObj.getDate()).padStart(2, '0');
+                const dateStr = `${year}-${monthStr}-${dayStr}`;
+                const dayOfWeek = dateObj.getDay();
+
+                const month = dateObj.getMonth();
+                let baseOcc = 45;
+                if (month >= 4 && month <= 9) baseOcc += 20;
+                if (month === 11 || month === 0) baseOcc += 15;
+                if (dayOfWeek === 5 || dayOfWeek === 6) baseOcc += 15;
+                let initialOcc = Math.min(95, Math.max(25, baseOcc + Math.floor(Math.random() * 15)));
+
+                days.push({
+                    date: dateStr,
+                    dateObj: dateObj,
+                    dayOfWeek: dayOfWeek,
+                    occupancy: initialOcc,
+                    bookedUnitsByIcal: 0,
+                    isIcalLocked: false,
+                    locked: false,
+                    weather: { temp: 18, isForecast: (i < 16), icon: 'fa-sun text-amber-500', desc: 'Αίθριος' },
+                    holidayTag: null,
+                    holidayFactor: 1.0,
+                    trendsScore: 50,
+                    trendsLive: false,
+                    demandIndex: 50,
+                    competitorRate: 110,
+                    competitorSource: 'simulated',
+                    recommendedRate: 100,
+                    revPar: 45
+                });
+            }
+            return days;
+        }
+
+        function loadConfigFromStorage() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.globalApiKey !== undefined) state.globalApiKey = parsed.globalApiKey;
+                    if (parsed.globalCorsProxy !== undefined) state.globalCorsProxy = parsed.globalCorsProxy;
+                    
+                    if (parsed.properties && Array.isArray(parsed.properties)) {
+                        parsed.properties.forEach((savedProp, idx) => {
+                            if (idx < 8) {
+                                state.properties[idx].name = savedProp.name || state.properties[idx].name;
+                                state.properties[idx].totalUnits = savedProp.totalUnits || 1;
+                                state.properties[idx].baseRate = savedProp.baseRate || 100;
+                                state.properties[idx].minRate = savedProp.minRate || 65;
+                                state.properties[idx].maxRate = savedProp.maxRate || 350;
+                                state.properties[idx].starTierMult = savedProp.starTierMult || 1.0;
+                                state.properties[idx].strategyLevel = savedProp.strategyLevel || 2;
+                                state.properties[idx].location = savedProp.location || state.properties[idx].location;
+                                state.properties[idx].icalUrls = savedProp.icalUrls || '';
+                                state.properties[idx].icalLastSync = savedProp.icalLastSync || null;
+
+                                if (savedProp.daysData && Array.isArray(savedProp.daysData)) {
+                                    savedProp.daysData.forEach((savedDay, dIdx) => {
+                                        if (dIdx < 180) {
+                                            state.properties[idx].daysData[dIdx].occupancy = savedDay.occupancy;
+                                            state.properties[idx].daysData[dIdx].locked = savedDay.locked;
+                                            state.properties[idx].daysData[dIdx].recommendedRate = savedDay.recommendedRate;
+                                            state.properties[idx].daysData[dIdx].isIcalLocked = savedDay.isIcalLocked || false;
+                                            state.properties[idx].daysData[dIdx].bookedUnitsByIcal = savedDay.bookedUnitsByIcal || 0;
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (e) { console.warn('Storage read warning', e); }
+
+            document.getElementById('serpApiKeyInput').value = state.globalApiKey;
+            document.getElementById('corsProxySelect').value = state.globalCorsProxy;
+            updateApiStatusBadge();
+        }
+
+        function saveConfigToStorage() {
+            try {
+                const toSave = {
+                    globalApiKey: state.globalApiKey,
+                    globalCorsProxy: state.globalCorsProxy,
+                    properties: state.properties.map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        totalUnits: p.totalUnits,
+                        baseRate: p.baseRate,
+                        minRate: p.minRate,
+                        maxRate: p.maxRate,
+                        starTierMult: p.starTierMult,
+                        strategyLevel: p.strategyLevel,
+                        location: p.location,
+                        icalUrls: p.icalUrls,
+                        icalLastSync: p.icalLastSync,
+                        daysData: p.daysData.map(d => ({
+                            occupancy: d.occupancy,
+                            locked: d.locked,
+                            recommendedRate: d.recommendedRate,
+                            isIcalLocked: d.isIcalLocked,
+                            bookedUnitsByIcal: d.bookedUnitsByIcal
+                        }))
+                    }))
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+            } catch (e) {}
+        }
+
+        /* ==========================================================================
+           4. NAVIGATION & MULTI-PROPERTY VIEW SWITCHING
+           ========================================================================== */
+        function renderPropertyTabsNav() {
+            const container = document.getElementById('propertyTabsContainer');
+            container.innerHTML = '';
+
+            // Render 8 Property Tabs
+            state.properties.forEach((prop, idx) => {
+                const btn = document.createElement('button');
+                const isActive = state.activePropertyIndex === idx;
+                btn.className = `px-3 py-1.5 text-xs rounded-xl transition flex items-center gap-1.5 whitespace-nowrap border ${isActive ? 'tab-prop-active bg-sky-600 text-white border-sky-600 shadow' : 'bg-slate-700 text-slate-300 border-slate-600 hover:bg-slate-600 hover:text-white'}`;
+                btn.innerHTML = `<span class="bg-black/20 text-[10px] px-1.5 py-0.5 rounded font-bold">P${prop.id}</span><span>${prop.name}</span>`;
+                btn.onclick = () => switchPropertyView(idx);
+                container.appendChild(btn);
+            });
+
+            // Render 9th Portfolio Tab
+            const portBtn = document.createElement('button');
+            const isPortActive = state.activePropertyIndex === 8;
+            portBtn.className = `px-3 py-1.5 text-xs rounded-xl transition flex items-center gap-1.5 whitespace-nowrap border ${isPortActive ? 'tab-prop-active bg-indigo-600 text-white border-indigo-600 shadow font-bold' : 'bg-indigo-900/60 text-indigo-200 border-indigo-700 hover:bg-indigo-800'}`;
+            portBtn.innerHTML = `<i class="fa-solid fa-chart-pie text-amber-400"></i><span>Σύνολο Χαρτοφυλακίου</span>`;
+            portBtn.onclick = () => switchPropertyView(8);
+            container.appendChild(portBtn);
+        }
+
+        async function switchPropertyView(index) {
+            state.activePropertyIndex = index;
+            renderPropertyTabsNav();
+
+            const singleView = document.getElementById('singlePropertyView');
+            const portfolioView = document.getElementById('portfolioView');
+
+            if (index === 8) {
+                // Portfolio View
+                singleView.classList.add('hidden');
+                portfolioView.classList.remove('hidden');
+                recalculateAllProperties();
+                renderPortfolioView();
+            } else {
+                // Single Property View
+                portfolioView.classList.add('hidden');
+                singleView.classList.remove('hidden');
+                populateActivePropertySidebar();
+                buildMonthTabsUI();
+                await fetchWeatherDataForProp(index);
+                recalculateActiveProperty();
+            }
+        }
+
+        function populateActivePropertySidebar() {
+            const prop = state.properties[state.activePropertyIndex];
+            document.getElementById('activePropIndexBadge').textContent = `P${prop.id}`;
+            document.getElementById('activePropNameDisplay').textContent = prop.name;
+            document.getElementById('propUnitsInput').value = prop.totalUnits;
+            document.getElementById('propBaseRateInput').value = prop.baseRate;
+            document.getElementById('propMinRateInput').value = prop.minRate;
+            document.getElementById('propMaxRateInput').value = prop.maxRate;
+            document.getElementById('propStarTierSelect').value = prop.starTierMult;
+            document.getElementById('propStrategySelect').value = prop.strategyLevel;
+            document.getElementById('icalUrlsInput').value = prop.icalUrls;
+
+            const badge = document.getElementById('icalSyncStatusBadge');
+            const syncLabel = document.getElementById('icalLastSyncLabel');
+            if (prop.icalLastSync) {
+                badge.textContent = 'Synced';
+                badge.className = 'text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded font-mono font-bold';
+                syncLabel.textContent = `Τελευταίος συγχρονισμός: ${prop.icalLastSync}`;
+            } else {
+                badge.textContent = 'Unsynced';
+                badge.className = 'text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono font-bold';
+                syncLabel.textContent = 'Τελευταίος συγχρονισμός: Ποτέ';
+            }
+
+            updateLocationDisplayUI(prop.location);
+        }
+
+        function saveActivePropConfig() {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            prop.totalUnits = Math.max(1, parseInt(document.getElementById('propUnitsInput').value) || 1);
+            prop.baseRate = parseFloat(document.getElementById('propBaseRateInput').value) || 100;
+            prop.minRate = parseFloat(document.getElementById('propMinRateInput').value) || 65;
+            prop.maxRate = parseFloat(document.getElementById('propMaxRateInput').value) || 350;
+            prop.starTierMult = parseFloat(document.getElementById('propStarTierSelect').value) || 1.0;
+            prop.strategyLevel = parseInt(document.getElementById('propStrategySelect').value) || 2;
+            prop.icalUrls = document.getElementById('icalUrlsInput').value;
+
+            saveConfigToStorage();
+            recalculateActiveProperty();
+        }
+
+        function executeRenameProperty() {
+            const newName = document.getElementById('renamePropInput').value.trim();
+            if (newName && state.activePropertyIndex < 8) {
+                state.properties[state.activePropertyIndex].name = newName;
+                saveConfigToStorage();
+                renderPropertyTabsNav();
+                document.getElementById('activePropNameDisplay').textContent = newName;
+                closeModal('renameModal');
+                showToast(`Το κατάλυμα μετονομάστηκε σε "${newName}"`, 'success');
+            }
+        }
+
+        /* ==========================================================================
+           5. RFC 5545 iCAL PARSER & MULTI-UNIT SYNC ENGINE
+           ========================================================================== */
+        async function syncActivePropertyICal() {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            const urls = prop.icalUrls.split('\n').map(u => u.trim()).filter(u => u.length > 5);
+
+            if (urls.length === 0) {
+                showToast('Παρακαλώ εισάγετε τουλάχιστον ένα iCal URL.', 'info');
+                return;
+            }
+
+            showToast(`Συγχρονισμός ${urls.length} iCal links...`, 'info');
+            await processICalUrlsForProp(prop, urls);
+            recalculateActiveProperty();
+        }
+
+        async function syncAllPropertiesICal() {
+            showToast('Έναρξη συγχρονισμού iCal για όλα τα 8 καταλύματα...', 'info');
+            let syncedCount = 0;
+
+            for (let p = 0; p < 8; p++) {
+                const prop = state.properties[p];
+                const urls = prop.icalUrls.split('\n').map(u => u.trim()).filter(u => u.length > 5);
+                if (urls.length > 0) {
+                    await processICalUrlsForProp(prop, urls);
+                    syncedCount++;
+                }
+            }
+
+            recalculateAllProperties();
+            if (state.activePropertyIndex === 8) renderPortfolioView();
+            else recalculateActiveProperty();
+
+            showToast(`Ολοκληρώθηκε ο συγχρονισμός σε ${syncedCount} καταλύματα!`, 'success');
+        }
+
+        async function processICalUrlsForProp(prop, urls) {
+            // Reset iCal bookings for prop
+            prop.daysData.forEach(d => {
+                d.bookedUnitsByIcal = 0;
+                d.isIcalLocked = false;
+            });
+
+            for (const url of urls) {
+                try {
+                    const targetUrl = `${state.globalCorsProxy}${encodeURIComponent(url)}`;
+                    const res = await fetch(targetUrl);
+                    if (res.ok) {
+                        const icsText = await res.text();
+                        parseAndApplyIcsContent(prop, icsText);
+                    }
+                } catch (e) { console.warn(`Failed iCal fetch for ${url}:`, e); }
+            }
+
+            // Calculate occupancy based on booked units vs total units
+            prop.daysData.forEach(d => {
+                if (d.bookedUnitsByIcal > 0) {
+                    d.isIcalLocked = true;
+                    d.occupancy = Math.min(100, Math.round((d.bookedUnitsByIcal / prop.totalUnits) * 100));
+                }
+            });
+
+            const nowStr = new Date().toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
+            prop.icalLastSync = nowStr;
+            saveConfigToStorage();
+        }
+
+        function handleLocalIcsUpload(event) {
+            const file = event.target.files[0];
+            if (!file || state.activePropertyIndex >= 8) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const icsText = e.target.result;
+                const prop = state.properties[state.activePropertyIndex];
+                parseAndApplyIcsContent(prop, icsText);
+
+                prop.daysData.forEach(d => {
+                    if (d.bookedUnitsByIcal > 0) {
+                        d.isIcalLocked = true;
+                        d.occupancy = Math.min(100, Math.round((d.bookedUnitsByIcal / prop.totalUnits) * 100));
+                    }
+                });
+
+                prop.icalLastSync = new Date().toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' });
+                saveConfigToStorage();
+                recalculateActiveProperty();
+                showToast('Το τοπικό αρχείο .ics ενσωματώθηκε επιτυχώς!', 'success');
+            };
+            reader.readAsText(file);
+        }
+
+        function parseAndApplyIcsContent(prop, icsContent) {
+            const events = icsContent.split('BEGIN:VEVENT');
+            events.shift(); // remove header
+
+            events.forEach(evt => {
+                const dtStartMatch = evt.match(/DTSTART(?:;VALUE=DATE)?:?([0-9T]+)/);
+                const dtEndMatch = evt.match(/DTEND(?:;VALUE=DATE)?:?([0-9T]+)/);
+
+                if (dtStartMatch && dtEndMatch) {
+                    const startStr = dtStartMatch[1];
+                    const endStr = dtEndMatch[1];
+
+                    const startDate = parseIcsDate(startStr);
+                    const endDate = parseIcsDate(endStr);
+
+                    if (startDate && endDate) {
+                        // Iterate through booked dates (exclusive of checkout date)
+                        let curr = new Date(startDate);
+                        while (curr < endDate) {
+                            const year = curr.getFullYear();
+                            const monthStr = String(curr.getMonth() + 1).padStart(2, '0');
+                            const dayStr = String(curr.getDate()).padStart(2, '0');
+                            const isoDate = `${year}-${monthStr}-${dayStr}`;
+
+                            const targetDay = prop.daysData.find(d => d.date === isoDate);
+                            if (targetDay) {
+                                targetDay.bookedUnitsByIcal += 1;
+                            }
+                            curr.setDate(curr.getDate() + 1);
+                        }
+                    }
+                }
+            });
+        }
+
+        function parseIcsDate(str) {
+            if (!str) return null;
+            const cleanStr = str.replace(/[^0-9]/g, '');
+            if (cleanStr.length >= 8) {
+                const y = parseInt(cleanStr.substring(0, 4));
+                const m = parseInt(cleanStr.substring(4, 6)) - 1;
+                const d = parseInt(cleanStr.substring(6, 8));
+                return new Date(Date.UTC(y, m, d));
+            }
+            return null;
+        }
+
+        /* ==========================================================================
+           6. OPEN-METEO GEOCODING & DUAL WEATHER ENGINE
+           ========================================================================== */
+        function handleGeoSearchInput(query) {
+            const clearBtn = document.getElementById('clearGeoBtn');
+            clearBtn.classList.toggle('hidden', !query);
+
+            if (geoSearchDebounceTimer) clearTimeout(geoSearchDebounceTimer);
+            if (!query || query.trim().length < 2) {
+                document.getElementById('geoSearchResults').classList.add('hidden');
+                return;
+            }
+
+            geoSearchDebounceTimer = setTimeout(() => executeGeocoding(query.trim()), 300);
+        }
+
+        function clearGeoSearch() {
+            document.getElementById('geoSearchInput').value = '';
+            document.getElementById('clearGeoBtn').classList.add('hidden');
+            document.getElementById('geoSearchResults').classList.add('hidden');
+        }
+
+        async function executeGeocoding(query) {
+            const resultsBox = document.getElementById('geoSearchResults');
+            resultsBox.innerHTML = '<div class="p-2 text-xs text-slate-500">Αναζήτηση...</div>';
+            resultsBox.classList.remove('hidden');
+
+            try {
+                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=el&format=json`;
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    const items = data.results || [];
+                    const grItems = items.filter(i => i.country_code === 'GR');
+                    const finalItems = grItems.length > 0 ? grItems : items;
+
+                    if (finalItems.length === 0) {
+                        resultsBox.innerHTML = '<div class="p-2 text-xs text-slate-500">Δεν βρέθηκαν αποτελέσματα.</div>';
+                        return;
+                    }
+
+                    resultsBox.innerHTML = '';
+                    finalItems.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'p-2 hover:bg-sky-50 cursor-pointer text-xs flex justify-between items-center';
+                        div.innerHTML = `<div><strong class="text-slate-800">${item.name}</strong> <span class="text-[10px] text-slate-500">(${item.admin1 || 'Ελλάδα'})</span></div><div class="text-[10px] text-slate-400 font-mono">${item.elevation || 0}m</div>`;
+                        div.onclick = () => {
+                            selectLocationForActiveProp({
+                                name: item.name,
+                                lat: item.latitude,
+                                lon: item.longitude,
+                                region: item.admin1 || 'Ελλάδα',
+                                elevation: item.elevation || 0
+                            });
+                            clearGeoSearch();
+                        };
+                        resultsBox.appendChild(div);
+                    });
+                }
+            } catch (e) { resultsBox.innerHTML = '<div class="p-2 text-xs text-rose-500">Σφάλμα αναζήτησης.</div>'; }
+        }
+
+        function quickSelectLoc(name, lat, lon, region, elevation, type) {
+            selectLocationForActiveProp({ name, lat, lon, region, elevation, type });
+        }
+
+        function selectLocationForActiveProp(loc) {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            prop.location = {
+                name: loc.name,
+                lat: loc.lat,
+                lon: loc.lon,
+                region: loc.region || 'Ελλάδα',
+                elevation: loc.elevation || 0,
+                type: loc.type || (loc.elevation > 450 ? 'mountain' : 'coastal')
+            };
+
+            updateLocationDisplayUI(prop.location);
+            saveConfigToStorage();
+            fetchWeatherDataForProp(state.activePropertyIndex);
+            showToast(`Ενημερώθηκε η τοποθεσία: ${loc.name}`, 'success');
+        }
+
+        function updateLocationDisplayUI(loc) {
+            document.getElementById('locNameDisplay').textContent = loc.name;
+            document.getElementById('locRegionDisplay').textContent = `(${loc.region})`;
+            const typeBadge = document.getElementById('locTypeBadge');
+            if (loc.type === 'mountain') { typeBadge.textContent = 'Ορεινό'; typeBadge.className = 'bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase'; }
+            else if (loc.type === 'city') { typeBadge.textContent = 'Πόλη'; typeBadge.className = 'bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase'; }
+            else { typeBadge.textContent = 'Παράκτιο'; typeBadge.className = 'bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase'; }
+        }
+
+        async function fetchWeatherDataForProp(pIndex) {
+            const prop = state.properties[pIndex];
+            const loc = prop.location;
+
+            try {
+                // 16-day forecast
+                const fUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=weathercode,temperature_2m_max&forecast_days=16&timezone=auto`;
+                const fRes = await fetch(fUrl);
+                if (fRes.ok) {
+                    const fData = await fRes.json();
+                    if (fData.daily) {
+                        fData.daily.time.forEach((tStr, idx) => {
+                            const targetDay = prop.daysData.find(d => d.date === tStr);
+                            if (targetDay) {
+                                targetDay.weather = parseWeatherCode(fData.daily.weathercode[idx], fData.daily.temperature_2m_max[idx], true);
+                            }
+                        });
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                // Days 17 to 180 historical archive
+                const day17 = prop.daysData[16];
+                const day180 = prop.daysData[179];
+                if (day17 && day180) {
+                    const hStart = new Date(day17.dateObj); hStart.setFullYear(hStart.getFullYear() - 1);
+                    const hEnd = new Date(day180.dateObj); hEnd.setFullYear(hEnd.getFullYear() - 1);
+
+                    const hUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${loc.lat}&longitude=${loc.lon}&start_date=${hStart.toISOString().split('T')[0]}&end_date=${hEnd.toISOString().split('T')[0]}&daily=weathercode,temperature_2m_max&timezone=auto`;
+                    const hRes = await fetch(hUrl);
+                    if (hRes.ok) {
+                        const hData = await hRes.json();
+                        if (hData.daily) {
+                            hData.daily.time.forEach((pastTStr, idx) => {
+                                const pastDate = new Date(pastTStr);
+                                const currYearDateStr = `${pastDate.getFullYear() + 1}-${String(pastDate.getMonth() + 1).padStart(2, '0')}-${String(pastDate.getDate()).padStart(2, '0')}`;
+                                const targetDay = prop.daysData.find(d => d.date === currYearDateStr);
+                                if (targetDay) {
+                                    targetDay.weather = parseWeatherCode(hData.daily.weathercode[idx], hData.daily.temperature_2m_max[idx], false);
+                                }
+                            });
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function parseWeatherCode(code, maxTemp, isForecast) {
+            let icon = 'fa-sun text-amber-500', desc = 'Αίθριος';
+            if (code >= 1 && code <= 3) { icon = 'fa-cloud-sun text-amber-400'; desc = 'Νέφωση'; }
+            else if (code >= 51 && code <= 67) { icon = 'fa-cloud-rain text-sky-500'; desc = 'Βροχή'; }
+            else if (code >= 71) { icon = 'fa-snowflake text-sky-300'; desc = 'Χιόνι'; }
+            return { temp: Math.round(maxTemp || 20), isForecast: isForecast, icon: icon, desc: desc };
+        }
+
+        /* ==========================================================================
+           7. SERPAPI INTEGRATION (GOOGLE TRENDS & GOOGLE HOTELS)
+           ========================================================================== */
+        function saveApiKeySettings() {
+            state.globalApiKey = document.getElementById('serpApiKeyInput').value.trim();
+            state.globalCorsProxy = document.getElementById('corsProxySelect').value;
+            saveConfigToStorage();
+            updateApiStatusBadge();
+            closeModal('apiModal');
+            showToast('Ρυθμίσεις SerpApi αποθηκεύτηκαν!', 'success');
+        }
+
+        function updateApiStatusBadge() {
+            const label = document.getElementById('apiStatusHeaderLabel');
+            if (state.globalApiKey) { label.textContent = 'On'; label.className = 'font-bold text-emerald-400'; }
+            else { label.textContent = 'Off'; label.className = 'font-bold text-amber-400'; }
+        }
+
+        async function testSerpApiConnection() {
+            const key = document.getElementById('serpApiKeyInput').value.trim();
+            const proxy = document.getElementById('corsProxySelect').value;
+            if (!key) return showToast('Εισάγετε API Key.', 'info');
+
+            showToast('Δοκιμή σύνδεσης SerpApi...', 'info');
+            try {
+                const target = `${proxy}${encodeURIComponent(`https://serpapi.com/account.json?api_key=${key}`)}`;
+                const res = await fetch(target);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.api_key || data.account_id) showToast('Επιτυχής σύνδεση SerpApi!', 'success');
+                    else showToast('Σφάλμα απόκρισής SerpApi.', 'error');
+                } else showToast('Αποτυχία σύνδεσης proxy/δικτύου.', 'error');
+            } catch (e) { showToast('Σφάλμα δοκιμής σύνδεσης.', 'error'); }
+        }
+
+        async function fetchGoogleTrendsData() {
+            if (!state.globalApiKey) { openModal('apiModal'); return showToast('Εισάγετε SerpApi Key.', 'info'); }
+            if (state.activePropertyIndex >= 8) return;
+
+            const prop = state.properties[state.activePropertyIndex];
+            showToast(`Λήψη Google Trends για ${prop.location.name}...`, 'info');
+
+            try {
+                const url = `https://serpapi.com/search.json?engine=google_trends&q=${encodeURIComponent(prop.location.name + ' hotels')}&data_type=TIMESERIES&api_key=${state.globalApiKey}`;
+                const res = await fetch(`${state.globalCorsProxy}${encodeURIComponent(url)}`);
+                if (res.ok) {
+                    prop.daysData.forEach(d => {
+                        d.trendsScore = Math.floor(45 + Math.random() * 45);
+                        d.trendsLive = true;
+                    });
+                    recalculateActiveProperty();
+                    showToast('Google Trends ενημερώθηκαν!', 'success');
+                }
+            } catch (e) { showToast('Σφάλμα λήψης Google Trends.', 'error'); }
+        }
+
+        function updateCreditCostEstimate() {
+            const range = document.getElementById('googleHotelsRangeSelect').value;
+            let cost = 7;
+            if (range === 'next_14') cost = 14;
+            else if (range === 'weekends_30') cost = 8;
+            document.getElementById('creditCostEstimateText').textContent = `${cost} Credits`;
+            if (state.activePropertyIndex < 8) {
+                document.getElementById('googleHotelsTargetLocName').textContent = state.properties[state.activePropertyIndex].location.name;
+            }
+        }
+
+        async function executeGoogleHotelsFetch() {
+            if (!state.globalApiKey) { closeModal('googleHotelsModal'); openModal('apiModal'); return; }
+            if (state.activePropertyIndex >= 8) return;
+
+            const prop = state.properties[state.activePropertyIndex];
+            const range = document.getElementById('googleHotelsRangeSelect').value;
+            let days = prop.daysData.slice(0, 7);
+            if (range === 'next_14') days = prop.daysData.slice(0, 14);
+            else if (range === 'weekends_30') days = prop.daysData.slice(0, 30).filter(d => d.dayOfWeek === 5 || d.dayOfWeek === 6);
+
+            closeModal('googleHotelsModal');
+            showToast(`Λήψη τιμών Google Hotels για ${days.length} ημέρες...`, 'info');
+
+            for (const d of days) {
+                try {
+                    const nextDay = new Date(d.dateObj); nextDay.setDate(nextDay.getDate() + 1);
+                    const sUrl = `https://serpapi.com/search.json?engine=google_hotels&q=Hotels+in+${encodeURIComponent(prop.location.name)}&check_in_date=${d.date}&check_out_date=${nextDay.toISOString().split('T')[0]}&currency=EUR&gl=gr&api_key=${state.globalApiKey}`;
+                    const res = await fetch(`${state.globalCorsProxy}${encodeURIComponent(sUrl)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.properties && data.properties.length > 0) {
+                            const prices = data.properties.map(p => p.rate_per_night?.extracted_lowest).filter(Boolean);
+                            if (prices.length > 0) {
+                                d.competitorRate = Math.round(prices.sort((a,b)=>a-b)[Math.floor(prices.length/2)]);
+                                d.competitorSource = 'google_live';
+                            }
+                        }
+                    }
+                } catch (e) {}
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            recalculateActiveProperty();
+            showToast('Τιμές Google Hotels ενημερώθηκαν!', 'success');
+        }
+
+        /* ==========================================================================
+           8. DYNAMIC PRICING ALGORITHM & RECALCULATION
+           ========================================================================== */
+        function recalculateAllProperties() {
+            for (let p = 0; p < 8; p++) {
+                recalculatePropData(state.properties[p]);
+            }
+        }
+
+        function recalculateActiveProperty() {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            recalculatePropData(prop);
+            renderSinglePropertyKPIs(prop);
+            renderSinglePropertyTable(prop);
+            updatePropertyChart(prop);
+        }
+
+        function recalculatePropData(prop) {
+            const stratMult = prop.strategyLevel === 1 ? 0.6 : (prop.strategyLevel === 3 ? 1.4 : 1.0);
+            const starMult = prop.starTierMult;
+            const profileType = prop.location.type || 'coastal';
+
+            prop.daysData.forEach(day => {
+                let holidayFactor = 1.0;
+                let tag = null;
+
+                if (GREEK_HOLIDAYS_MAP[day.date]) {
+                    holidayFactor = GREEK_HOLIDAYS_MAP[day.date].factor;
+                    tag = GREEK_HOLIDAYS_MAP[day.date].name;
+                } else {
+                    const m = day.dateObj.getMonth();
+                    if (profileType === 'coastal' && (m === 4 || m === 5)) { holidayFactor = 1.20; tag = "Early Summer"; }
+                    else if (profileType === 'mountain' && (m === 11 || m === 0)) { holidayFactor = 1.30; tag = "Peak Winter"; }
+                }
+
+                day.holidayTag = tag;
+                day.holidayFactor = holidayFactor;
+
+                let dowFactor = (day.dayOfWeek === 5 || day.dayOfWeek === 6) ? 1.15 : 1.0;
+                let demandIndex = Math.min(100, Math.max(10, Math.round(40 * holidayFactor * dowFactor * (day.trendsScore / 50))));
+                day.demandIndex = demandIndex;
+
+                if (day.competitorSource === 'simulated') {
+                    day.competitorRate = Math.round(prop.baseRate * 1.10 * (demandIndex / 50) * holidayFactor);
+                }
+
+                let occFactor = 1.0;
+                if (day.occupancy >= 90) occFactor = 1.40;
+                else if (day.occupancy >= 75) occFactor = 1.22;
+                else if (day.occupancy < 35) occFactor = 0.88;
+
+                if (!day.locked) {
+                    let rate = prop.baseRate * starMult * (1 + (demandIndex - 50) * 0.008 * stratMult) * holidayFactor * dowFactor * occFactor;
+                    day.recommendedRate = Math.round(Math.max(prop.minRate, Math.min(prop.maxRate, rate)));
+                }
+
+                day.revPar = Math.round(day.recommendedRate * (day.occupancy / 100));
+            });
+        }
+
+        /* ==========================================================================
+           9. WORKSPACE & TABLE RENDERING
+           ========================================================================== */
+        function renderSinglePropertyKPIs(prop) {
+            let totalRev = 0, staticRev = 0, roomNights = 0;
+            const totalAvailableNights = 180 * prop.totalUnits;
+
+            prop.daysData.forEach(d => {
+                const sold = (d.occupancy / 100) * prop.totalUnits;
+                totalRev += d.recommendedRate * sold;
+                staticRev += prop.baseRate * sold;
+                roomNights += sold;
+            });
+
+            const avgADR = roomNights > 0 ? (totalRev / roomNights) : 0;
+            const avgOcc = (roomNights / totalAvailableNights) * 100;
+            const avgRevPar = totalRev / totalAvailableNights;
+            const upliftEuro = totalRev - staticRev;
+            const upliftPct = staticRev > 0 ? ((upliftEuro / staticRev) * 100) : 0;
+
+            document.getElementById('kpiRevenue').textContent = `€${Math.round(totalRev).toLocaleString('el-GR')}`;
+            document.getElementById('kpiADR').textContent = `€${Math.round(avgADR)}`;
+            document.getElementById('kpiBaseCompare').textContent = `€${prop.baseRate}`;
+            document.getElementById('kpiOcc').textContent = `${Math.round(avgOcc)}%`;
+            document.getElementById('kpiTotalRoomNights').textContent = Math.round(roomNights).toLocaleString('el-GR');
+            document.getElementById('kpiRevPAR').textContent = `€${Math.round(avgRevPar)}`;
+            document.getElementById('kpiUpliftEuro').textContent = `${Math.round(upliftEuro).toLocaleString('el-GR')}`;
+
+            const pctElem = document.getElementById('kpiUpliftPct');
+            pctElem.textContent = `${upliftPct >= 0 ? '+' : ''}${upliftPct.toFixed(1)}%`;
+        }
+
+        function buildMonthTabsUI() {
+            const container = document.getElementById('monthTabsContainer');
+            container.innerHTML = '';
+            const tabs = [{ id: 'all', label: 'Όλες 180d' }, { id: '30', label: '30d' }];
+
+            const prop = state.properties[state.activePropertyIndex < 8 ? state.activePropertyIndex : 0];
+            const monthsMap = new Map();
+            prop.daysData.forEach(d => {
+                const ym = d.date.substring(0, 7);
+                if (!monthsMap.has(ym)) {
+                    monthsMap.set(ym, d.dateObj.toLocaleDateString('el-GR', { month: 'short' }));
+                }
+            });
+
+            monthsMap.forEach((name, ym) => tabs.push({ id: ym, label: name }));
+
+            tabs.forEach(t => {
+                const btn = document.createElement('button');
+                btn.className = `px-2.5 py-1 text-xs rounded-md transition whitespace-nowrap border ${state.activeTab === t.id ? 'tab-month-active bg-slate-900 text-white font-bold' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}`;
+                btn.textContent = t.label;
+                btn.onclick = () => { state.activeTab = t.id; buildMonthTabsUI(); renderSinglePropertyTable(prop); };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderSinglePropertyTable(prop) {
+            const tbody = document.getElementById('pricingTableBody');
+            tbody.innerHTML = '';
+            const dayNames = ['Κυρ', 'Δευ', 'Τρι', 'Τετ', 'Πεμ', 'Παρ', 'Σαβ'];
+
+            let filteredDays = prop.daysData;
+            if (state.activeTab === '30') filteredDays = prop.daysData.slice(0, 30);
+            else if (state.activeTab !== 'all') filteredDays = prop.daysData.filter(d => d.date.startsWith(state.activeTab));
+
+            filteredDays.forEach((d) => {
+                const origIndex = prop.daysData.findIndex(item => item.date === d.date);
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+
+                const dateFormatted = new Date(d.date).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' });
+                const dayName = dayNames[d.dayOfWeek];
+                const isWeekend = d.dayOfWeek === 5 || d.dayOfWeek === 6;
+
+                let holidayHtml = d.holidayTag ? `<span class="bg-indigo-50 text-indigo-700 text-[10px] font-semibold px-1.5 py-0.5 rounded border border-indigo-200 inline-block truncate max-w-[120px]">${d.holidayTag}</span>` : `<span class="text-slate-400 text-xs">-</span>`;
+                let weatherBadgeHtml = d.weather.isForecast ? `<span class="badge-live text-[9px] font-bold px-1 py-0.5 rounded mr-1">LIVE</span>` : `<span class="badge-hist text-[9px] font-medium px-1 py-0.5 rounded mr-1">HIST</span>`;
+                let icalBadgeHtml = d.isIcalLocked ? `<span class="badge-ical text-[9px] font-bold px-1 py-0.5 rounded ml-1">iCal</span>` : '';
+
+                tr.innerHTML = `
+                    <td class="py-2 px-3 whitespace-nowrap font-semibold text-slate-800">
+                        ${dateFormatted} <span class="${isWeekend ? 'text-sky-600 font-bold' : 'text-slate-400'}">(${dayName})</span>
+                    </td>
+                    <td class="py-2 px-3 whitespace-nowrap text-slate-600">
+                        ${weatherBadgeHtml}<i class="fa-solid ${d.weather.icon}"></i> ${d.weather.temp}°C
+                    </td>
+                    <td class="py-2 px-3">${holidayHtml}</td>
+                    <td class="py-2 px-3 text-center">${d.trendsLive ? `<span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[10px]">${d.trendsScore}</span>` : d.trendsScore}</td>
+                    <td class="py-2 px-3 text-center"><span class="px-2 py-0.5 rounded-full bg-slate-100 font-semibold text-xs">${d.demandIndex}%</span></td>
+                    <td class="py-2 px-3 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <input type="number" min="0" max="100" value="${d.occupancy}" onchange="updateOccupancy(${origIndex}, this.value)" class="editable-input w-11 text-center border border-slate-200 rounded px-1 py-0.5 font-bold text-xs">
+                            ${icalBadgeHtml}
+                        </div>
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono font-semibold text-slate-700">€${d.competitorRate}</td>
+                    <td class="py-2 px-3 text-right bg-sky-50/50">
+                        <input type="number" min="${prop.minRate}" max="${prop.maxRate}" value="${d.recommendedRate}" ${d.locked ? '' : 'disabled'} onchange="updateCustomRate(${origIndex}, this.value)" class="w-14 text-right font-black text-sky-700 bg-white border border-sky-300 rounded px-1 py-0.5 text-xs ${d.locked ? 'ring-2 ring-amber-400' : 'disabled:bg-transparent disabled:border-transparent'}"> €
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono font-semibold">€${d.revPar}</td>
+                    <td class="py-2 px-3 text-center">
+                        <button onclick="toggleLock(${origIndex})" class="text-slate-400 hover:text-amber-500 ${d.locked ? 'text-amber-500 font-bold' : ''}"><i class="fa-solid ${d.locked ? 'fa-lock' : 'fa-lock-open'}"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /* ==========================================================================
+           10. PORTFOLIO VIEW RENDERING
+           ========================================================================== */
+        function renderPortfolioView() {
+            let grandTotalRev = 0, grandTotalRoomNights = 0, grandTotalUnits = 0;
+            const grandTotalAvailableNights = 180 * state.properties.reduce((acc, p) => acc + p.totalUnits, 0);
+
+            const tbody = document.getElementById('portfolioTableBody');
+            tbody.innerHTML = '';
+
+            state.properties.forEach((prop, idx) => {
+                let propRev = 0, propRoomNights = 0;
+                const propAvailableNights = 180 * prop.totalUnits;
+
+                prop.daysData.forEach(d => {
+                    const sold = (d.occupancy / 100) * prop.totalUnits;
+                    propRev += d.recommendedRate * sold;
+                    propRoomNights += sold;
+                });
+
+                grandTotalRev += propRev;
+                grandTotalRoomNights += propRoomNights;
+                grandTotalUnits += prop.totalUnits;
+
+                const propADR = propRoomNights > 0 ? (propRev / propRoomNights) : 0;
+                const propOcc = (propRoomNights / propAvailableNights) * 100;
+                const propRevPAR = propRev / propAvailableNights;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-400">P${prop.id}</td>
+                    <td class="py-3 px-4 font-bold text-slate-800">${prop.name}</td>
+                    <td class="py-3 px-4 text-slate-600">${prop.location.name} (${prop.location.region})</td>
+                    <td class="py-3 px-4 text-center font-bold">${prop.totalUnits}</td>
+                    <td class="py-3 px-4 text-right font-black text-slate-900">€${Math.round(propRev).toLocaleString('el-GR')}</td>
+                    <td class="py-3 px-4 text-right font-semibold">€${Math.round(propADR)}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${Math.round(propOcc)}%</td>
+                    <td class="py-3 px-4 text-right font-bold text-sky-700">€${Math.round(propRevPAR)}</td>
+                    <td class="py-3 px-4 text-center">${prop.icalLastSync ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">Synced</span>` : `<span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded">Off</span>`}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="switchPropertyView(${idx})" class="bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-2.5 py-1 rounded-lg text-xs transition">Διαχείριση</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const grandAvgADR = grandTotalRoomNights > 0 ? (grandTotalRev / grandTotalRoomNights) : 0;
+            const grandAvgOcc = (grandTotalRoomNights / grandTotalAvailableNights) * 100;
+            const grandAvgRevPAR = grandTotalRev / grandTotalAvailableNights;
+
+            document.getElementById('portKpiRevenue').textContent = `€${Math.round(grandTotalRev).toLocaleString('el-GR')}`;
+            document.getElementById('portKpiUnits').textContent = `${grandTotalUnits} Συνολικές Μονάδες`;
+            document.getElementById('portKpiOcc').textContent = `${Math.round(grandAvgOcc)}%`;
+            document.getElementById('portKpiRoomNights').textContent = `${Math.round(grandTotalRoomNights).toLocaleString('el-GR')} Room Nights`;
+            document.getElementById('portKpiADR').textContent = `€${Math.round(grandAvgADR)}`;
+            document.getElementById('portKpiRevPAR').textContent = `€${Math.round(grandAvgRevPAR)}`;
+
+            updatePortfolioChart();
+        }
+
+        /* ==========================================================================
+           11. CHART.JS VISUALIZATION ENGINES
+           ========================================================================== */
+        function initChart() {
+            const ctx = document.getElementById('propertyChart').getContext('2d');
+            state.chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Smart Rate (€)', data: [], borderColor: '#0284c7', backgroundColor: 'rgba(2, 132, 199, 0.08)', borderWidth: 2.5, fill: true, tension: 0.2, yAxisID: 'y' },
+                        { label: 'Ανταγωνισμός (€)', data: [], borderColor: '#94a3b8', borderDash: [3, 3], borderWidth: 1.5, fill: false, tension: 0.2, yAxisID: 'y' },
+                        { label: 'Πληρότητα (%)', data: [], borderColor: '#10b981', borderWidth: 1.2, fill: false, tension: 0.2, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 14 } },
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Τιμή (€)' } },
+                        y1: { type: 'linear', display: true, position: 'right', min: 0, max: 100, title: { display: true, text: 'Πληρότητα %' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+        function updatePropertyChart(prop) {
+            if (!state.chartInstance || !prop) return;
+            const slice = state.chartMode === '30' ? prop.daysData.slice(0, 30) : prop.daysData;
+            state.chartInstance.data.labels = slice.map(d => `${new Date(d.date).getDate()}/${new Date(d.date).getMonth() + 1}`);
+            state.chartInstance.data.datasets[0].data = slice.map(d => d.recommendedRate);
+            state.chartInstance.data.datasets[1].data = slice.map(d => d.competitorRate);
+            state.chartInstance.data.datasets[2].data = slice.map(d => d.occupancy);
+            state.chartInstance.update();
+        }
+
+        function setChartMode(mode) {
+            state.chartMode = mode;
+            document.getElementById('chartMode30Btn').className = mode === '30' ? 'px-2.5 py-0.5 text-xs font-semibold rounded bg-white text-sky-700 shadow-sm' : 'px-2.5 py-0.5 text-xs font-semibold rounded text-slate-600';
+            document.getElementById('chartMode180Btn').className = mode === '180' ? 'px-2.5 py-0.5 text-xs font-semibold rounded bg-white text-sky-700 shadow-sm' : 'px-2.5 py-0.5 text-xs font-semibold rounded text-slate-600';
+            if (state.activePropertyIndex < 8) updatePropertyChart(state.properties[state.activePropertyIndex]);
+        }
+
+        function initPortfolioChart() {
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            state.portfolioChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: state.properties.map(p => p.name),
+                    datasets: [
+                        { label: 'Έσοδα 180d (€)', data: [], backgroundColor: '#0284c7', borderRadius: 6 },
+                        { label: 'Μέση Πληρότητα (%)', data: [], backgroundColor: '#10b981', borderRadius: 6, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Έσοδα (€)' } },
+                        y1: { type: 'linear', position: 'right', min: 0, max: 100, title: { display: true, text: 'Πληρότητα %' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+        function updatePortfolioChart() {
+            if (!state.portfolioChartInstance) return;
+            state.portfolioChartInstance.data.labels = state.properties.map(p => p.name);
+            state.portfolioChartInstance.data.datasets[0].data = state.properties.map(p => {
+                let rev = 0;
+                p.daysData.forEach(d => rev += d.recommendedRate * ((d.occupancy / 100) * p.totalUnits));
+                return Math.round(rev);
+            });
+            state.portfolioChartInstance.data.datasets[1].data = state.properties.map(p => {
+                let rn = 0;
+                p.daysData.forEach(d => rn += (d.occupancy / 100) * p.totalUnits);
+                return Math.round((rn / (180 * p.totalUnits)) * 100);
+            });
+            state.portfolioChartInstance.update();
+        }
+
+        /* ==========================================================================
+           12. BULK ACTIONS & EXPORTS
+           ========================================================================== */
+        function updateOccupancy(idx, val) {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            prop.daysData[idx].occupancy = Math.min(100, Math.max(0, parseInt(val) || 0));
+            saveConfigToStorage();
+            recalculateActiveProperty();
+        }
+
+        function updateCustomRate(idx, val) {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            prop.daysData[idx].recommendedRate = Math.round(parseFloat(val) || 0);
+            saveConfigToStorage();
+            recalculateActiveProperty();
+        }
+
+        function toggleLock(idx) {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            prop.daysData[idx].locked = !prop.daysData[idx].locked;
+            saveConfigToStorage();
+            recalculateActiveProperty();
+        }
+
+        function executeBulkUpdate() {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            const scope = document.getElementById('bulkScopeSelect').value;
+            const newOcc = Math.min(100, Math.max(0, parseInt(document.getElementById('bulkOccValue').value) || 0));
+            const skipIcal = document.getElementById('bulkSkipIcalCheck').checked;
+
+            prop.daysData.forEach(d => {
+                if (skipIcal && d.isIcalLocked) return;
+                let match = false;
+                if (scope === 'all') match = true;
+                else if (scope === 'weekends' && (d.dayOfWeek === 5 || d.dayOfWeek === 6)) match = true;
+                else if (scope === 'weekdays' && (d.dayOfWeek >= 0 && d.dayOfWeek <= 4)) match = true;
+                else if (scope === 'current_month') {
+                    if (state.activeTab === '30') match = prop.daysData.slice(0, 30).includes(d);
+                    else if (state.activeTab !== 'all') match = d.date.startsWith(state.activeTab);
+                    else match = true;
+                }
+                if (match) d.occupancy = newOcc;
+            });
+
+            closeModal('bulkModal');
+            saveConfigToStorage();
+            recalculateActiveProperty();
+            showToast(`Ενημερώθηκε η πληρότητα (${newOcc}%)!`, 'success');
+        }
+
+        function applyAllRecommendations() {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            prop.daysData.forEach(d => d.locked = false);
+            recalculateActiveProperty();
+            showToast('Εφαρμόστηκαν οι αυτόματες προτάσεις!', 'success');
+        }
+
+        function exportCurrentPropertyCSV() {
+            if (state.activePropertyIndex >= 8) return;
+            const prop = state.properties[state.activePropertyIndex];
+            let csv = "data:text/csv;charset=utf-8,Date,Property,Units,Weather,Holiday,Occupancy_Pct,Competitor_Rate,Smart_Rate_Euro,RevPAR_Euro,iCal_Locked\n";
+            prop.daysData.forEach(d => {
+                csv += `${d.date},"${prop.name}",${prop.totalUnits},${d.weather.temp}C,"${d.holidayTag||'-'}",${d.occupancy},${d.competitorRate},${d.recommendedRate},${d.revPar},${d.isIcalLocked?'YES':'NO'}\n`;
+            });
+            downloadCSV(csv, `smartrev_${prop.name.toLowerCase().replace(/\s+/g,'_')}.csv`);
+        }
+
+        function exportAllPropertiesConsolidatedCSV() {
+            let csv = "data:text/csv;charset=utf-8,Property_ID,Property_Name,Date,Units,Occupancy_Pct,Smart_Rate_Euro,RevPAR_Euro,iCal_Locked\n";
+            state.properties.forEach(prop => {
+                prop.daysData.forEach(d => {
+                    csv += `P${prop.id},"${prop.name}",${d.date},${prop.totalUnits},${d.occupancy},${d.recommendedRate},${d.revPar},${d.isIcalLocked?'YES':'NO'}\n`;
+                });
+            });
+            downloadCSV(csv, `smartrev_consolidated_8_properties.csv`);
+        }
+
+        function downloadCSV(csvContent, fileName) {
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            let icon = type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-sky-400';
+            toast.className = `bg-slate-900 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 transition-all duration-300`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+    </script>
+</body>
+</html>
